@@ -57,7 +57,7 @@ export default function AgentEditorPage() {
       const imported = importAgent(data as Agent);
       navigate(`/agents/${imported.id}`);
       setImportError('');
-    } catch (error) {
+    } catch {
       setImportError('Falha ao importar agente.');
     }
   };
@@ -109,8 +109,15 @@ export default function AgentEditorPage() {
             Importar JSON
             <input type="file" accept="application/json" className="hidden" onChange={(event) => event.target.files?.[0] && handleImport(event.target.files[0])} />
           </label>
-          <button onClick={() => { deleteAgent(agent.id); navigate('/agents'); }} className="rounded-2xl bg-danger px-5 py-3 text-sm font-semibold text-white transition hover:bg-danger/90">Excluir</button>
           <button
+            type="button"
+            onClick={() => { deleteAgent(agent.id); navigate('/agents'); }}
+            className="rounded-2xl bg-danger px-5 py-3 text-sm font-semibold text-white transition hover:bg-danger/90"
+          >
+            Excluir
+          </button>
+          <button
+            type="button"
             onClick={() => {
               const duplicated = duplicateAgent(agent.id);
               if (duplicated) navigate(`/agents/${duplicated.id}`);
@@ -204,87 +211,85 @@ export default function AgentEditorPage() {
           </div>
 
           <div className="grid gap-6 rounded-3xl border border-border bg-[#0f172a] p-6">
-            <div className="grid gap-4 lg:grid-cols-[0.95fr_1.05fr]">
-              <div className="grid gap-4">
-                <div className="rounded-3xl border border-border bg-[#11121a] p-5">
-                  <div className="flex items-center justify-between gap-4">
-                    <div>
-                      <p className="text-sm uppercase tracking-[0.3em] text-neutral-500">Status</p>
-                      <h2 className="mt-1 text-xl font-semibold text-white">Vida e sanidade</h2>
+            <div className="grid gap-4">
+              <div className="rounded-3xl border border-border bg-[#11121a] p-5">
+                <div className="flex flex-col gap-4">
+                  <div>
+                    <p className="text-sm uppercase tracking-[0.3em] text-neutral-500">Status</p>
+                    <h2 className="mt-1 text-xl font-semibold text-white">Vida e sanidade</h2>
+                  </div>
+                </div>
+                <div className="mt-4 grid gap-4">
+                  <div className="rounded-3xl bg-[#0f172a] p-4">
+                    <div className="flex items-center justify-between text-sm text-neutral-400">
+                      <span>HP</span>
+                      <span>{agent.hp}/{agent.maxHp}</span>
+                    </div>
+                    <div className="mt-3 h-3 overflow-hidden rounded-full bg-white/10">
+                      <div className="h-full rounded-full bg-accent" style={{ width: `${Math.min(100, Math.max(0, (agent.hp / Math.max(1, agent.maxHp)) * 100))}%` }} />
+                    </div>
+                    <div className="mt-4 grid gap-3">
+                      <input
+                        type="number"
+                        value={agent.hp}
+                        min={0}
+                        onChange={(event) => update({ hp: Number(event.target.value) })}
+                        className="w-full rounded-2xl border border-border bg-[#11121a] px-4 py-3 text-sm text-white outline-none transition focus:border-accent"
+                      />
+                      <input
+                        type="number"
+                        value={agent.maxHp}
+                        min={1}
+                        onChange={(event) => update({ maxHp: Number(event.target.value) })}
+                        className="w-full rounded-2xl border border-border bg-[#11121a] px-4 py-3 text-sm text-white outline-none transition focus:border-accent"
+                      />
                     </div>
                   </div>
-                  <div className="mt-4 grid gap-4">
-                    <div className="rounded-3xl bg-[#0f172a] p-4">
-                      <div className="flex items-center justify-between text-sm text-neutral-400">
-                        <span>HP</span>
-                        <span>{agent.hp}/{agent.maxHp}</span>
-                      </div>
-                      <div className="mt-3 h-3 overflow-hidden rounded-full bg-white/10">
-                        <div className="h-full rounded-full bg-accent" style={{ width: `${Math.min(100, Math.max(0, (agent.hp / Math.max(1, agent.maxHp)) * 100))}%` }} />
-                      </div>
-                      <div className="mt-4 grid gap-3">
-                        <input
-                          type="number"
-                          value={agent.hp}
-                          min={0}
-                          onChange={(event) => update({ hp: Number(event.target.value) })}
-                          className="w-full rounded-2xl border border-border bg-[#11121a] px-4 py-3 text-sm text-white outline-none transition focus:border-accent"
-                        />
-                        <input
-                          type="number"
-                          value={agent.maxHp}
-                          min={1}
-                          onChange={(event) => update({ maxHp: Number(event.target.value) })}
-                          className="w-full rounded-2xl border border-border bg-[#11121a] px-4 py-3 text-sm text-white outline-none transition focus:border-accent"
-                        />
-                      </div>
+                  <div className="rounded-3xl bg-[#0f172a] p-4">
+                    <div className="flex items-center justify-between text-sm text-neutral-400">
+                      <span>Sanidade</span>
+                      <span>{agent.sanity}/{agent.maxSanity}</span>
                     </div>
-                    <div className="rounded-3xl bg-[#0f172a] p-4">
-                      <div className="flex items-center justify-between text-sm text-neutral-400">
-                        <span>Sanidade</span>
-                        <span>{agent.sanity}/{agent.maxSanity}</span>
-                      </div>
-                      <div className="mt-3 h-3 overflow-hidden rounded-full bg-white/10">
-                        <div className="h-full rounded-full bg-emerald-500" style={{ width: `${Math.min(100, Math.max(0, (agent.sanity / Math.max(1, agent.maxSanity)) * 100))}%` }} />
-                      </div>
-                      <div className="mt-4 grid gap-3">
-                        <input
-                          type="number"
-                          value={agent.sanity}
-                          min={0}
-                          onChange={(event) => update({ sanity: Number(event.target.value) })}
-                          className="w-full rounded-2xl border border-border bg-[#11121a] px-4 py-3 text-sm text-white outline-none transition focus:border-accent"
-                        />
-                        <input
-                          type="number"
-                          value={agent.maxSanity}
-                          min={1}
-                          onChange={(event) => update({ maxSanity: Number(event.target.value) })}
-                          className="w-full rounded-2xl border border-border bg-[#11121a] px-4 py-3 text-sm text-white outline-none transition focus:border-accent"
-                        />
-                      </div>
+                    <div className="mt-3 h-3 overflow-hidden rounded-full bg-white/10">
+                      <div className="h-full rounded-full bg-emerald-500" style={{ width: `${Math.min(100, Math.max(0, (agent.sanity / Math.max(1, agent.maxSanity)) * 100))}%` }} />
+                    </div>
+                    <div className="mt-4 grid gap-3">
+                      <input
+                        type="number"
+                        value={agent.sanity}
+                        min={0}
+                        onChange={(event) => update({ sanity: Number(event.target.value) })}
+                        className="w-full rounded-2xl border border-border bg-[#11121a] px-4 py-3 text-sm text-white outline-none transition focus:border-accent"
+                      />
+                      <input
+                        type="number"
+                        value={agent.maxSanity}
+                        min={1}
+                        onChange={(event) => update({ maxSanity: Number(event.target.value) })}
+                        className="w-full rounded-2xl border border-border bg-[#11121a] px-4 py-3 text-sm text-white outline-none transition focus:border-accent"
+                      />
                     </div>
                   </div>
                 </div>
+              </div>
 
-                <div className="rounded-3xl border border-border bg-[#11121a] p-5">
-                  <div className="flex items-center justify-between gap-4">
-                    <p className="text-sm uppercase tracking-[0.3em] text-neutral-500">Navegação</p>
-                  </div>
-                  <div className="mt-4 grid gap-3">
-                    {sectionTabs.map((tab) => (
-                      <button
-                        key={tab.id}
-                        type="button"
-                        onClick={() => setActiveSectionTab(tab.id)}
-                        className={`rounded-2xl border border-border px-4 py-3 text-left text-sm font-semibold transition ${
-                          activeSectionTab === tab.id ? 'bg-accent text-white' : 'text-neutral-200 hover:border-accent hover:text-white'
-                        }`}
-                      >
-                        {tab.label}
-                      </button>
-                    ))}
-                  </div>
+              <div className="rounded-3xl border border-border bg-[#11121a] p-5">
+                <div className="flex flex-col gap-4">
+                  <p className="text-sm uppercase tracking-[0.3em] text-neutral-500">Navegação</p>
+                </div>
+                <div className="mt-4 grid gap-3">
+                  {sectionTabs.map((tab) => (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setActiveSectionTab(tab.id)}
+                      className={`rounded-2xl border border-border px-4 py-3 text-left text-sm font-semibold transition ${
+                        activeSectionTab === tab.id ? 'bg-accent text-white' : 'text-neutral-200 hover:border-accent hover:text-white'
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>
@@ -343,9 +348,7 @@ export default function AgentEditorPage() {
                   <SkillEditor
                     key={skill.id}
                     skill={skill}
-                    onChange={(updated) =>
-                      update({ skills: agent.skills.map((item) => (item.id === updated.id ? updated : item)) })
-                    }
+                    onChange={(updated) => update({ skills: agent.skills.map((item) => (item.id === updated.id ? updated : item)) })}
                     onRemove={() => update({ skills: agent.skills.filter((item) => item.id !== skill.id) })}
                   />
                 ))

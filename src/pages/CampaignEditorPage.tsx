@@ -30,9 +30,10 @@ export default function CampaignEditorPage() {
   const { campaigns, updateCampaign, deleteCampaign, duplicateCampaign, importCampaign } = useCampaigns();
   const [activeTab, setActiveTab] = useState('players');
   const [error, setError] = useState('');
+  const [shareMessage, setShareMessage] = useState('');
+  const [selectedAgentId, setSelectedAgentId] = useState('');
 
   const campaign = useMemo(() => campaigns.find((item) => item.id === id), [campaigns, id]);
-  const [selectedAgentId, setSelectedAgentId] = useState('');
 
   const availableAgents = useMemo(
     () => agents.filter((agent) => !campaign?.players.includes(agent.id)),
@@ -60,7 +61,7 @@ export default function CampaignEditorPage() {
       const imported = importCampaign(data as Campaign);
       navigate(`/campaigns/${imported.id}`);
       setError('');
-    } catch (importError) {
+    } catch {
       setError('Falha ao importar campanha.');
     }
   };
@@ -75,8 +76,19 @@ export default function CampaignEditorPage() {
       const importedAgent = data as Agent;
       update({ players: [...campaign.players, importedAgent.id] });
       setError('');
-    } catch (importError) {
+    } catch {
       setError('Falha ao importar agente.');
+    }
+  };
+
+  const copyCampaignJson = async () => {
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(campaign, null, 2));
+      setShareMessage('JSON da campanha copiado! Compartilhe com seus jogadores.');
+      window.setTimeout(() => setShareMessage(''), 3000);
+    } catch {
+      setShareMessage('Falha ao copiar. Use o botão Exportar JSON para compartilhar manualmente.');
+      window.setTimeout(() => setShareMessage(''), 5000);
     }
   };
 
@@ -87,14 +99,16 @@ export default function CampaignEditorPage() {
           <p className="text-sm uppercase tracking-[0.3em] text-accent">Editor de campanha</p>
           <h1 className="mt-2 text-3xl font-semibold text-white">{campaign.name || 'Campanha sem nome'}</h1>
         </div>
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-3 items-center">
           <button onClick={() => exportCampaign(campaign)} className="rounded-2xl bg-white/5 px-5 py-3 text-sm text-neutral-200 transition hover:bg-white/10">Exportar JSON</button>
+          <button type="button" onClick={copyCampaignJson} className="rounded-2xl bg-white/5 px-5 py-3 text-sm text-neutral-200 transition hover:bg-white/10">Copiar JSON</button>
           <label className="cursor-pointer rounded-2xl border border-border bg-white/5 px-5 py-3 text-sm text-neutral-200 transition hover:bg-white/10">
             Importar campanha
             <input type="file" accept="application/json" className="hidden" onChange={(event) => event.target.files?.[0] && handleImportCampaign(event.target.files[0])} />
           </label>
           <button onClick={() => { deleteCampaign(campaign.id); navigate('/campaigns'); }} className="rounded-2xl bg-danger px-5 py-3 text-sm font-semibold text-white transition hover:bg-danger/90">Excluir</button>
           <button
+            type="button"
             onClick={() => {
               const duplicated = duplicateCampaign(campaign.id);
               if (duplicated) navigate(`/campaigns/${duplicated.id}`);
@@ -107,6 +121,7 @@ export default function CampaignEditorPage() {
       </div>
 
       {error ? <div className="rounded-3xl border border-danger bg-[#500a0a] p-4 text-sm text-white">{error}</div> : null}
+      {shareMessage ? <div className="rounded-3xl border border-accent bg-[#0f172a] p-4 text-sm text-white">{shareMessage}</div> : null}
 
       <div className="rounded-3xl border border-border bg-[#11121a] p-6 shadow-panel">
         <div className="mb-6">
@@ -246,9 +261,7 @@ export default function CampaignEditorPage() {
                     <MonsterEditor
                       key={monster.id}
                       monster={monster}
-                      onChange={(updated) =>
-                        update({ monsters: campaign.monsters.map((item) => (item.id === updated.id ? updated : item)) })
-                      }
+                      onChange={(updated) => update({ monsters: campaign.monsters.map((item) => (item.id === updated.id ? updated : item)) })}
                       onRemove={() => update({ monsters: campaign.monsters.filter((item) => item.id !== monster.id) })}
                     />
                   ))}

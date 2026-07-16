@@ -32,6 +32,9 @@ export default function CampaignEditorPage() {
   const [error, setError] = useState('');
   const [shareMessage, setShareMessage] = useState('');
   const [selectedAgentId, setSelectedAgentId] = useState('');
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newLocationName, setNewLocationName] = useState('');
+  const [newLocationDescription, setNewLocationDescription] = useState('');
 
   const campaign = useMemo(() => campaigns.find((item) => item.id === id), [campaigns, id]);
 
@@ -39,6 +42,9 @@ export default function CampaignEditorPage() {
     () => agents.filter((agent) => !campaign?.players.includes(agent.id)),
     [agents, campaign?.players]
   );
+
+  const noteCategories = campaign?.noteCategories ?? [];
+  const locations = campaign?.locations ?? [];
 
   if (!campaign) {
     return (
@@ -139,6 +145,7 @@ export default function CampaignEditorPage() {
             { id: 'notes', label: 'Anotações' },
             { id: 'monsters', label: 'Monstros' },
             { id: 'maps', label: 'Mapas' },
+            { id: 'locations', label: 'Locais' },
           ]}
           activeTab={activeTab}
           onChange={setActiveTab}
@@ -231,13 +238,80 @@ export default function CampaignEditorPage() {
           )}
 
           {activeTab === 'notes' && (
-            <div className="space-y-4">
-              <textarea
-                value={campaign.notes}
-                onChange={(event) => update({ notes: event.target.value })}
-                placeholder="Notas da campanha"
-                className="min-h-[260px] w-full rounded-3xl border border-border bg-[#0f172a] px-4 py-4 text-sm text-white outline-none transition focus:border-accent"
-              />
+            <div className="space-y-6">
+              <div className="grid gap-4 rounded-3xl border border-border bg-[#0f172a] p-5">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-sm uppercase tracking-[0.3em] text-neutral-500">Categorias de notas</p>
+                    <h2 className="mt-1 text-xl font-semibold text-white">Organizar anotações</h2>
+                  </div>
+                </div>
+                <div className="grid gap-3">
+                  {noteCategories.length === 0 ? (
+                    <div className="rounded-3xl bg-white/5 p-4 text-sm text-neutral-400">Nenhuma categoria criada.</div>
+                  ) : (
+                    noteCategories.map((category) => (
+                      <div key={category.id} className="grid gap-2 rounded-3xl border border-border bg-[#11121a] p-4">
+                        <div className="flex items-center justify-between gap-3">
+                          <h3 className="text-sm font-semibold text-white">{category.name}</h3>
+                          <button
+                            type="button"
+                            onClick={() => update({ noteCategories: noteCategories.filter((item) => item.id !== category.id) })}
+                            className="text-sm text-danger hover:text-red-300"
+                          >
+                            Excluir
+                          </button>
+                        </div>
+                        <textarea
+                          value={category.notes}
+                          onChange={(event) =>
+                            update({
+                              noteCategories: noteCategories.map((item) =>
+                                item.id === category.id ? { ...item, notes: event.target.value } : item
+                              ),
+                            })
+                          }
+                          placeholder="Conteúdo da categoria"
+                          className="min-h-[120px] w-full rounded-3xl border border-border bg-[#0f172a] px-4 py-4 text-sm text-white outline-none transition focus:border-accent"
+                        />
+                      </div>
+                    ))
+                  )}
+                </div>
+                <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+                  <input
+                    value={newCategoryName}
+                    onChange={(event) => setNewCategoryName(event.target.value)}
+                    placeholder="Nome da nova categoria"
+                    className="w-full rounded-2xl border border-border bg-[#11121a] px-4 py-3 text-sm text-white outline-none transition focus:border-accent"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!newCategoryName.trim()) return;
+                      update({
+                        noteCategories: [
+                          ...noteCategories,
+                          { id: crypto.randomUUID(), name: newCategoryName.trim(), notes: '' },
+                        ],
+                      });
+                      setNewCategoryName('');
+                    }}
+                    className="rounded-2xl bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:bg-accent/90"
+                  >
+                    Adicionar categoria
+                  </button>
+                </div>
+                <label className="block text-sm text-neutral-400">
+                  Notas gerais
+                  <textarea
+                    value={campaign.notes}
+                    onChange={(event) => update({ notes: event.target.value })}
+                    placeholder="Notas gerais da campanha"
+                    className="mt-2 min-h-[160px] w-full rounded-3xl border border-border bg-[#0f172a] px-4 py-4 text-sm text-white outline-none transition focus:border-accent"
+                  />
+                </label>
+              </div>
             </div>
           )}
 
@@ -273,14 +347,124 @@ export default function CampaignEditorPage() {
           {activeTab === 'maps' && (
             <MapUploader
               maps={campaign.maps}
-              onAdd={(map) => update({ maps: [...campaign.maps, map] })}
+              onAdd={(mapSrc) =>
+                update({
+                  maps: [
+                    ...campaign.maps,
+                    {
+                      id: crypto.randomUUID(),
+                      name: `Mapa ${campaign.maps.length + 1}`,
+                      src: mapSrc,
+                      playersMarked: false,
+                    },
+                  ],
+                })
+              }
               onRemove={(index) => update({ maps: campaign.maps.filter((_, idx) => idx !== index) })}
-              onRename={(index, value) => {
-                const newMaps = [...campaign.maps];
-                newMaps[index] = value;
-                update({ maps: newMaps });
-              }}
+              onRename={(index, value) =>
+                update({
+                  maps: campaign.maps.map((map, idx) =>
+                    idx === index ? { ...map, name: value } : map
+                  ),
+                })
+              }
+              onToggleMarkers={(mapId) =>
+                update({
+                  maps: campaign.maps.map((map) =>
+                    map.id === mapId ? { ...map, playersMarked: !map.playersMarked } : map
+                  ),
+                })
+              }
             />
+          )}
+
+          {activeTab === 'locations' && (
+            <div className="grid gap-6 rounded-3xl border border-border bg-[#0f172a] p-5">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm uppercase tracking-[0.3em] text-neutral-500">Locais</p>
+                  <h2 className="mt-1 text-xl font-semibold text-white">Gerenciar pontos</h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!newLocationName.trim()) return;
+                    update({
+                      locations: [
+                        ...locations,
+                        {
+                          id: crypto.randomUUID(),
+                          name: newLocationName.trim(),
+                          description: newLocationDescription.trim(),
+                        },
+                      ],
+                    });
+                    setNewLocationName('');
+                    setNewLocationDescription('');
+                  }}
+                  className="rounded-2xl bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:bg-accent/90"
+                >
+                  Adicionar local
+                </button>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-[1fr_1fr]">
+                <input
+                  value={newLocationName}
+                  onChange={(event) => setNewLocationName(event.target.value)}
+                  placeholder="Nome do local"
+                  className="w-full rounded-2xl border border-border bg-[#11121a] px-4 py-3 text-sm text-white outline-none transition focus:border-accent"
+                />
+                <input
+                  value={newLocationDescription}
+                  onChange={(event) => setNewLocationDescription(event.target.value)}
+                  placeholder="Descrição do local"
+                  className="w-full rounded-2xl border border-border bg-[#11121a] px-4 py-3 text-sm text-white outline-none transition focus:border-accent"
+                />
+              </div>
+
+              <div className="grid gap-4">
+                {locations.length === 0 ? (
+                  <div className="rounded-3xl bg-white/5 p-4 text-sm text-neutral-400">Nenhum local adicionado.</div>
+                ) : (
+                  locations.map((location) => (
+                    <div key={location.id} className="grid gap-3 rounded-3xl border border-border bg-[#11121a] p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-white">{location.name}</p>
+                          <p className="text-xs text-neutral-400">{location.description || 'Sem descrição'}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => update({ locations: locations.filter((item) => item.id !== location.id) })}
+                          className="rounded-2xl bg-danger px-3 py-2 text-sm text-white"
+                        >
+                          Excluir
+                        </button>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-sm text-neutral-300">Marcações de players</span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            update({
+                              locations: locations.map((item) =>
+                                item.id === location.id
+                                  ? { ...item, playersMarked: !item.playersMarked }
+                                  : item
+                              ),
+                            })
+                          }
+                          className="rounded-2xl bg-white/5 px-4 py-2 text-sm text-neutral-200 transition hover:bg-white/10"
+                        >
+                          {location.playersMarked ? 'Desativar marcação' : 'Marcar players'}
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
           )}
         </div>
       </div>

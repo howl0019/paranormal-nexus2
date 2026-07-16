@@ -9,6 +9,8 @@ const defaultCampaign: Campaign = {
   players: [],
   monsters: [],
   maps: [],
+  noteCategories: [],
+  locations: [],
   createdAt: Date.now(),
   updatedAt: Date.now(),
 };
@@ -63,8 +65,10 @@ export function useCampaigns() {
       createdAt: Date.now(),
       updatedAt: Date.now(),
       monsters: source.monsters.map((monster) => ({ ...monster, id: crypto.randomUUID() })),
-      maps: [...source.maps],
+      maps: source.maps.map((map) => ({ ...map, id: crypto.randomUUID() })),
       players: [...source.players],
+      noteCategories: source.noteCategories?.map((category) => ({ ...category, id: crypto.randomUUID() })) ?? [],
+      locations: source.locations?.map((location) => ({ ...location, id: crypto.randomUUID() })) ?? [],
     };
     setCampaigns((current) => [duplicated, ...current]);
     return duplicated;
@@ -77,8 +81,10 @@ export function useCampaigns() {
       createdAt: Date.now(),
       updatedAt: Date.now(),
       monsters: campaign.monsters.map((monster) => ({ ...monster, id: crypto.randomUUID() })),
-      maps: [...campaign.maps],
+      maps: campaign.maps.map((map) => ({ ...map, id: crypto.randomUUID() })),
       players: [...campaign.players],
+      noteCategories: campaign.noteCategories?.map((category) => ({ ...category, id: crypto.randomUUID() })) ?? [],
+      locations: campaign.locations?.map((location) => ({ ...location, id: crypto.randomUUID() })) ?? [],
     };
     setCampaigns((current) => [imported, ...current]);
     return imported;
